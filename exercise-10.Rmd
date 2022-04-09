@@ -1,0 +1,77 @@
+---
+title: "exercise-10"
+author: "Ajna Kertesz"
+date: '2022-04-09'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r ex10, warning=FALSE, message=FALSE}
+
+library(dplyr)
+library(tidyverse)
+library(sjPlot)
+
+
+link<- "https://raw.githubusercontent.com/difiore/ada-2022-datasets/main/KamilarAndCooperData.csv"
+
+d<- read_csv(link, col_names = TRUE)
+
+#From this dataset, plot lifespan (scored as MaxLongevity_m in the dataset) versus female body mass (scored as Body_mass_female_mean). Is the relationship linear? If not, how might you transform one or both variable to more closely approximate a linear relationship? #not normally dist, need to use log transform
+
+plot(d$Body_mass_female_mean, d$MaxLongevity_m)
+plot(log(d$Body_mass_female_mean), d$MaxLongevity_m)
+plot(log(d$Body_mass_female_mean), (log(d$MaxLongevity_m)))
+
+#Run linear models of lifespan ~ female body mass, lifespan ~ log(female body mass), and log(lifespan) ~ log(female body mass)
+
+m1<- lm(MaxLongevity_m~Body_mass_female_mean, data=d)
+m2<- lm(MaxLongevity_m~log(Body_mass_female_mean), data=d)
+m3<- lm(log(MaxLongevity_m)~log(Body_mass_female_mean), data=d)
+
+anova(m1, m2, m3)
+
+tab_model(m1, m2, m3, dv.labels= c('m1','m2', 'm3'))
+
+#Generate residuals for all three linear models, plot them by hand in relation to the corresponding explanatory variable, and make histograms of the residuals. Do they appear to be normally distributed?
+
+plot(x=m1$model$Body_mass_female_mean, y=m1$residuals)
+plot(x=m2$model$`log(Body_mass_female_mean)`, y=m2$residuals)
+plot(x=log(m3$model$`log(Body_mass_female_mean)`), y=log(m1$residuals))
+
+hist(m1$residuals)
+hist(m2$residuals)
+hist(m3$residuals)
+
+#yes, they look normally distributed now
+
+#Generate QQ plots for all three linear models. Do they appear to be normally distributed? Based on visual inspection of the QQ plots, do the residual appear to deviate from being normally distributed?
+
+qqnorm(m1$model$Body_mass_female_mean)
+qqnorm(m2$model$`log(Body_mass_female_mean)`)
+qqnorm(m3$model$`log(Body_mass_female_mean)`)
+
+#Except for m1, they look normal
+
+#Run the plot() command for all three models and visually inspect the resultant plots. What do the plots suggest about whether the assumptions for regression are met for any of these models?
+
+plot(m1)
+plot(m2)
+plot(m3)
+
+#it was not a normally distributed sample, but after transforming the data using log, it is now normally distributed
+
+#Run Shapiro-Wilks tests (e.g., using the function shapiro.test() on the residuals for all three models.
+
+shapiro.test(m1$residuals) #p=0.0008 #NOT normally dist
+shapiro.test(m2$residuals) #p=0.011 #normally dist
+shapiro.test(m3$residuals) #p=0.74  #normally dist
+
+```
+
+
+
